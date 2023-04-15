@@ -12,7 +12,6 @@ struct TimedKey {
 };
 
 ArduinoQueue<TimedKey> timedKeys(8);
-bool toggleStates[NUM_BTNS] = {false};
 
 void setup() {
   #ifdef DEBUG
@@ -25,8 +24,72 @@ void setup() {
   }
 }
 
-void loop() {
-  unsigned long time = millis();
+void onKeyPressedSeries(char theKeys[], unsigned long time) {
+  byte keylen = strlen(theKeys);
+  for (char i = 1; i < keylen; i += 2) {
+    char key = theKeys[i];
+    byte delay = theKeys[i+1];
+    if (i <= 1) {
+      timedKeys.enqueue({time+(delay*(i-1)), true, key});
+    } else {
+      timedKeys.enqueue({time+(delay*(i-2)), true, key});
+    }
+    timedKeys.enqueue({time+(delay*(i)), false, key});
+  }
+}
+
+void onKeyPressedToggle(char theKeys[], byte btnIdx) {
+  // TODO: i hope you dont have more keys than 8 >.<*
+  static bool toggleStates[NUM_BTNS][8] = {false};
+  byte keylen = strlen(theKeys);
+  for (char i = 1; i < keylen; i++) {
+    char key = theKeys[i];
+    toggleStates[btnIdx][i] = !toggleStates[btnIdx][i];
+    if (toggleStates[btnIdx][i]) {
+      #ifdef DEBUG
+        Serial.println("TOGGLE PRESS");
+        Serial.println((byte)key);
+      #else
+        Keyboard.press(key);
+      #endif
+    } else {
+      #ifdef DEBUG
+        Serial.println("TOGGLE RELEASE");
+        Serial.println((byte)key);
+      #else
+        Keyboard.release(key);
+      #endif
+    }
+  }
+}
+
+void onKeyPressedMoment(char theKeys[]) {
+  byte keylen = strlen(theKeys);
+  for (char i = 1; i < keylen; i++) {
+    char key = theKeys[i];
+    #ifdef DEBUG
+      Serial.println("MOMENT PRESS");
+      Serial.println((byte)key);
+    #else
+      Keyboard.press(key);
+    #endif
+  }
+}
+
+void onKeyReleasedMoment(char theKeys[]) {
+  byte keylen = strlen(theKeys);
+  for (char i = 1; i < keylen; i++) {
+    char key = theKeys[i];
+    #ifdef DEBUG
+      Serial.println("MOMENT RELEASE");
+      Serial.println((byte)key);
+    #else
+      Keyboard.release(key);
+    #endif
+  }
+}
+
+void handleTimedKeys (unsigned long time) {
   for (byte e = 0; e < timedKeys.itemCount(); e++) {
     TimedKey item = timedKeys.getHead();
     if (time >= item.time) {
@@ -50,65 +113,41 @@ void loop() {
       timedKeys.dequeue();
     }
   }
+}
+
+void loop() {
+  unsigned long time = millis();
+  handleTimedKeys(time);
+
+  /* TODO: do we need this? or is it ok in loop below
   for (byte i = 0; i < NUM_BTNS; i++) {
     buttons[i].loop();
   }
+  */
+
   for (byte i = 0; i < NUM_BTNS; i++) {
+    buttons[i].loop();
+    byte keytype = keys[i][0];
     if (buttons[i].isPressed()) {
       #ifdef DEBUG
         Serial.println("### BUTTON PRESSED ###");
       #endif
-      byte keylen = strlen(keys[i]);
-      byte keytype = keys[i][0];
-      for (char j = 1; j < keylen; j += 2) {
-        char key = keys[i][j];
-        byte delay = keys[i][j+1];
-        if (keytype == SERIES) {
-          if (j <= 1) {
-            timedKeys.enqueue({time+(delay*(j-1)), true, key});
-          } else {
-            timedKeys.enqueue({time+(delay*(j-2)), true, key});
-          }
-          timedKeys.enqueue({time+(delay*(j)), false, key});
-        } else if (keytype == TOGGLE) {
-          toggleStates[i] = !toggleStates[i];
-          if (toggleStates[i]) {
-            #ifdef DEBUG
-              Serial.println("TOGGLE PRESS");
-              Serial.println((byte)key);
-            #else
-              Keyboard.press(key);
-            #endif
-          } else {
-            #ifdef DEBUG
-              Serial.println("TOGGLE RELEASE");
-              Serial.println((byte)key);
-            #else
-              Keyboard.release(key);
-            #endif
-          }
-        } else if (keytype == MOMENT) {
-          #ifdef DEBUG
-            Serial.println("MOMENT PRESS");
-            Serial.println((byte)key);
-          #else
-            Keyboard.press(key);
-          #endif
-        }
+      if (keytype == SERIES) {
+        onKeyPressedSeries(keys[i], time);
       }
-    } else if (buttons[i].isReleased()) {
-      char keytype = keys[i][0];
+      else if (keytype == TOGGLE) {
+        onKeyPressedToggle(keys[i], i);
+      }
+      else if (keytype = MOMENT) {
+        onKeyPressedMoment(keys[i]);
+      }
+    }
+    else if (buttons[i].isReleased()) {
+      #ifdef DEBUG
+        Serial.println("### BUTTON RELEASED ###");
+      #endif
       if (keytype == MOMENT) {
-        int keylen = strlen(keys[i]);
-        for (char j = 1; j < keylen; j++) {
-          char key = keys[i][j];
-          #ifdef DEBUG
-            Serial.println("MOMENT RELEASE");
-            Serial.println((byte)key);
-          #else
-            Keyboard.release(key);
-          #endif
-        }
+        onKeyReleasedMoment(keys[i]);
       }
     }
   }
