@@ -11,7 +11,10 @@ struct TimedKey {
   char key;
 };
 
+// TODO: i hope you dont use more than 8 SERIES keys at the same time >.<*
 ArduinoQueue<TimedKey> timedKeys(8);
+// TODO: i hope you dont have more keys than 8 for a button >.<*
+static bool toggleStates[NUM_BTNS][8] = {false};
 
 void setup() {
   #ifdef DEBUG
@@ -26,7 +29,7 @@ void setup() {
 
 void onKeyPressedSeries(char theKeys[], unsigned long time) {
   byte keylen = strlen(theKeys);
-  for (char i = 1; i < keylen; i += 2) {
+  for (byte i = 1; i < keylen; i += 2) {
     char key = theKeys[i];
     byte delay = theKeys[i+1];
     if (i <= 1) {
@@ -39,10 +42,8 @@ void onKeyPressedSeries(char theKeys[], unsigned long time) {
 }
 
 void onKeyPressedToggle(char theKeys[], byte btnIdx) {
-  // TODO: i hope you dont have more keys than 8 >.<*
-  static bool toggleStates[NUM_BTNS][8] = {false};
   byte keylen = strlen(theKeys);
-  for (char i = 1; i < keylen; i++) {
+  for (byte i = 1; i < keylen; i++) {
     char key = theKeys[i];
     toggleStates[btnIdx][i] = !toggleStates[btnIdx][i];
     if (toggleStates[btnIdx][i]) {
@@ -65,7 +66,7 @@ void onKeyPressedToggle(char theKeys[], byte btnIdx) {
 
 void onKeyPressedMoment(char theKeys[]) {
   byte keylen = strlen(theKeys);
-  for (char i = 1; i < keylen; i++) {
+  for (byte i = 1; i < keylen; i++) {
     char key = theKeys[i];
     #ifdef DEBUG
       Serial.println("MOMENT PRESS");
@@ -76,9 +77,59 @@ void onKeyPressedMoment(char theKeys[]) {
   }
 }
 
+void onKeyPressedToggleMoment(char theKeys[], byte btnIdx) {
+  byte keylen = (strlen(theKeys) - 1) / 2;
+  for (byte i = 1; i <= keylen; i++) {
+    byte keytype = theKeys[i*2]; // 1 == TOGGLE, 2 == MOMENT
+    char key = theKeys[i+(i-1)];
+    if (keytype == 1) {
+      toggleStates[btnIdx][i] = !toggleStates[btnIdx][i];
+      if (toggleStates[btnIdx][i]) {
+        #ifdef DEBUG
+          Serial.print("TOGGLE PRESS KEY ");
+          Serial.println((byte)key);
+        #else
+          Keyboard.press(key);
+        #endif
+      } else {
+        #ifdef DEBUG
+          Serial.print("TOGGLE RELEASE KEY ");
+          Serial.println((byte)key);
+        #else
+          Keyboard.release(key);
+        #endif
+      }
+    }
+    else if (keytype == 2) {
+      #ifdef DEBUG
+        Serial.print("MOMENT PRESS ");
+        Serial.println((byte)key);
+      #else
+        Keyboard.press(key);
+      #endif
+    }
+  }
+}
+
+void onKeyReleasedToggleMoment(char theKeys[]) {
+  byte keylen = strlen(theKeys);
+  for (byte i = 1; i < keylen; i += 2) {
+    byte keytype = theKeys[i+1]; // 1 == TOGGLE, 2 == MOMENT
+    char key = theKeys[i];
+    if (keytype == 1) {
+      #ifdef DEBUG
+        Serial.print("MOMENT RELEASE ");
+        Serial.println((byte)key);
+      #else
+        Keyboard.release(key);
+      #endif
+    }
+  }
+}
+
 void onKeyReleasedMoment(char theKeys[]) {
   byte keylen = strlen(theKeys);
-  for (char i = 1; i < keylen; i++) {
+  for (byte i = 1; i < keylen; i++) {
     char key = theKeys[i];
     #ifdef DEBUG
       Serial.println("MOMENT RELEASE");
@@ -138,8 +189,11 @@ void loop() {
       else if (keytype == TOGGLE) {
         onKeyPressedToggle(keys[i], i);
       }
-      else if (keytype = MOMENT) {
+      else if (keytype == MOMENT) {
         onKeyPressedMoment(keys[i]);
+      }
+      else if (keytype == TOGMOM) {
+        onKeyPressedToggleMoment(keys[i], i);
       }
     }
     else if (buttons[i].isReleased()) {
@@ -148,6 +202,9 @@ void loop() {
       #endif
       if (keytype == MOMENT) {
         onKeyReleasedMoment(keys[i]);
+      }
+      else if (keytype == TOGMOM) {
+        onKeyReleasedToggleMoment(keys[i]);
       }
     }
   }

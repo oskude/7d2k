@@ -5,7 +5,7 @@ Arduino ["WASD"](https://en.wikipedia.org/wiki/Arrow_keys#WASD_keys) keyboard wi
 ## Dependencies
 
 - [ezButton](https://www.arduinolibraries.info/libraries/ez-button)
-- [Keyboard](https://www.arduinolibraries.info/libraries/keyboard) (requires 32u4 or SAMD based board)
+- [Keyboard](https://www.arduinolibraries.info/libraries/keyboard) (check for [compatibility](https://www.arduino.cc/reference/en/libraries/keyboard/))
 - [ArduinoQueue](https://www.arduinolibraries.info/libraries/arduino-queue)
 
 ## Usage
@@ -44,6 +44,7 @@ Todo
 - Move pinky and thumb keys slight to the left
 - Add esc key
 - T2 has to be a bigger key? (jump)
+- Would horizontal keys for pinky be better?
 
 ### Parts
 
@@ -61,7 +62,7 @@ If you want to build this 1:1, you need
 
 ### Build
 
-1. Eventually Adapt [prototype2/keyboard.FCStd](prototype2/keyboard.FCStd) with [FreeCAD](https://www.freecad.org/)
+1. Possibly adapt [prototype2/keyboard.FCStd](prototype2/keyboard.FCStd) with [FreeCAD](https://www.freecad.org/)
 2. Print [prototype2/keyboard.lbrn2](prototype2/keyboard.lbrn2) with [LightBurn](https://lightburnsoftware.com/) (or import your exported SVG from FreeCAD)
 3. Glue the laser cut parts together
 4. Add Arduino Micro, buttons and wire them

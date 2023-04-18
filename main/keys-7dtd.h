@@ -1,10 +1,11 @@
 // prototype 2 keys for 7 days to die
 
 enum KeyType {
-  SO_UMM_DUNNO,
+  NO_ZERO,
   MOMENT,
   SERIES,
-  TOGGLE
+  TOGGLE,
+  TOGMOM
 };
 KeyType keyType;
 
@@ -14,13 +15,13 @@ static char keys[][8] {
   // thumb
   /* T1 */ {SERIES, KEY_F7, del, 'g', del}, // inventory
   /* T2 */ {MOMENT, ' '}, // jump
-  /* T3 */ {SERIES, KEY_ESC, del, KEY_F7, del}, // escape and hide ui
+  /* T3 */ {MOMENT, KEY_ESC, KEY_F7}, // escape and hide ui
   // index finger
   /* I1 */ {MOMENT, 'c'},
   /* I2 */ {MOMENT, 'd'},
-  /* I3 */ {SERIES, KEY_F7, del, 'e', del}, // open container
+  /* I3 */ {MOMENT, KEY_F7, 'e'}, // open container
   /* I4 */ {MOMENT, 'v'},
-  /* I5 */ {SERIES, KEY_F7, del, 'r', del}, // TODO: upstream has to split "reload/takeall"
+  /* I5 */ {MOMENT, KEY_F7, 'r'}, // TODO: upstream has to split "reload/takeall"
   /* I6 */ {MOMENT, 'f'},
   // middle finger
   /* M1 */ {MOMENT, 'x'},
